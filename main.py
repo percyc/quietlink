@@ -470,8 +470,8 @@ if __name__ == "__main__":
             app,
             host="0.0.0.0",
             port=port,
-            ssl_certfile="cert.pem",
-            ssl_keyfile="key.pem",
+            ssl_certfile="certs/cert.pem",
+            ssl_keyfile="certs/key.pem",
         )
     else:
         uvicorn.run(app, host="0.0.0.0", port=port)

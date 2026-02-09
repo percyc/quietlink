@@ -25,9 +25,11 @@ PORT=${1:-8080}
 # 检查HTTPS模式
 if [ "$2" = "https" ]; then
     echo "🔒 启用HTTPS模式"
-    if [ ! -f "cert.pem" ] || [ ! -f "key.pem" ]; then
+    # 创建证书目录
+    mkdir -p certs
+    if [ ! -f "certs/cert.pem" ] || [ ! -f "certs/key.pem" ]; then
         echo "📜 生成自签名证书..."
-        openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=localhost"
+        openssl req -x509 -newkey rsa:2048 -keyout certs/key.pem -out certs/cert.pem -days 365 -nodes -subj "/CN=localhost"
     fi
     echo ""
     echo "⚠️  首次访问时会提示证书不受信任，点击高级 → 继续访问"
@@ -55,11 +57,12 @@ echo ""
 # 启动服务器
 if [ "$2" = "https" ]; then
     # 检查证书是否存在
-    if [ ! -f "cert.pem" ] || [ ! -f "key.pem" ]; then
+    mkdir -p certs
+    if [ ! -f "certs/cert.pem" ] || [ ! -f "certs/key.pem" ]; then
         echo "📜 生成自签名证书..."
-        openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=localhost"
+        openssl req -x509 -newkey rsa:2048 -keyout certs/key.pem -out certs/cert.pem -days 365 -nodes -subj "/CN=localhost"
     fi
-    uv run uvicorn main:app --host 0.0.0.0 --port "$PORT" --reload --ssl-certfile cert.pem --ssl-keyfile key.pem
+    uv run uvicorn main:app --host 0.0.0.0 --port "$PORT" --reload --ssl-certfile certs/cert.pem --ssl-keyfile certs/key.pem
 else
     uv run uvicorn main:app --host 0.0.0.0 --port "$PORT" --reload
 fi
