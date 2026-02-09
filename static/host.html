@@ -48,22 +48,110 @@
         .video-preview video { width: 100%; display: block; }
         .hidden { display: none !important; }
         
-        .request-list {
+        .client-management {
             background: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
-        .request-item {
+        .client-section {
+            margin-bottom: 20px;
+        }
+        .client-section:last-child {
+            margin-bottom: 0;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title .count {
+            background: #2196F3;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        .section-title .count.empty {
+            background: #999;
+        }
+        .client-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid #eee;
+            padding: 12px 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #fafafa;
         }
-        .request-item:last-child { border-bottom: none; }
-        .btn-approve { background: #4CAF50; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; }
-        .btn-reject { background: #f44336; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; }
+        .client-item:last-child { margin-bottom: 0; }
+        .client-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .client-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4CAF50;
+        }
+        .client-status.pending {
+            background: #FF9800;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .btn-approve { 
+            background: #4CAF50; 
+            color: white; 
+            padding: 6px 14px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-reject { 
+            background: #f44336; 
+            color: white; 
+            padding: 6px 14px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 5px;
+        }
+        .btn-disconnect {
+            background: #f44336;
+            color: white;
+            padding: 6px 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-disconnect:hover {
+            background: #d32f2f;
+        }
+        .empty-text {
+            padding: 20px;
+            color: #999;
+            text-align: center;
+            font-style: italic;
+        }
+        .divider {
+            height: 1px;
+            background: #eee;
+            margin: 15px 0;
+        }
         
         .notification {
             position: fixed;
@@ -88,15 +176,36 @@
             </div>
         </div>
         
-        <div id="videoSection" class="video-preview hidden">
-            <video id="localVideo" autoplay playsinline muted></video>
+        <!-- 客户端管理区域 -->
+        <div class="client-management">
+            <!-- 待处理请求 -->
+            <div class="client-section">
+                <div class="section-title">
+                    待处理请求
+                    <span id="pendingCount" class="count empty">0</span>
+                </div>
+                <div id="requestContainer">
+                    <div class="empty-text">暂无连接请求</div>
+                </div>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <!-- 在线客户端 -->
+            <div class="client-section">
+                <div class="section-title">
+                    在线客户端
+                    <span id="onlineCount" class="count empty">0</span>
+                </div>
+                <div id="onlineContainer">
+                    <div class="empty-text">暂无在线客户端</div>
+                </div>
+            </div>
         </div>
         
-        <div class="request-list">
-            <h3>加入请求 <span id="requestCount">(0)</span></h3>
-            <div id="requestList">
-                <div style="padding: 20px; color: #999; text-align: center;">暂无加入请求</div>
-            </div>
+        <!-- 视频预览 -->
+        <div id="videoSection" class="video-preview hidden">
+            <video id="localVideo" autoplay playsinline muted></video>
         </div>
     </div>
     
@@ -109,7 +218,8 @@
         let peerConnections = {};
         let localStream = null;
         let roomCode = null;
-        let pendingRequests = {};
+        let pendingRequests = {};  // 待处理请求
+        let onlineClients = {};    // 在线客户端
         
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
@@ -187,54 +297,153 @@
             roomCode = null;
             roomCodeDisplay.textContent = '------';
             pendingRequests = {};
-            updateRequestList();
+            onlineClients = {};
+            updatePendingList();
+            updateOnlineList();
             
             connectWebSocket();
         }
         
         function handleJoinRequest(clientId) {
+            // 检查是否已经是已批准或在线的客户端
+            if (onlineClients[clientId]) {
+                return; // 已在线，忽略重复请求
+            }
             pendingRequests[clientId] = true;
-            updateRequestList();
+            updatePendingList();
             showNotification(`收到来自客户端 ${clientId} 的加入请求`);
         }
         
-        function updateRequestList() {
-            const requests = Object.keys(pendingRequests);
-            requestCount.textContent = `(${requests.length})`;
-            
-            if (requests.length === 0) {
-                requestList.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">暂无加入请求</div>';
-                return;
-            }
-            
-            requestList.innerHTML = requests.map(clientId => `
-                <div class="request-item">
-                    <span>客户端 ${clientId}</span>
-                    <div>
-                        <button class="btn-approve" onclick="approveClient('${clientId}')">同意</button>
-                        <button class="btn-reject" onclick="rejectClient('${clientId}')">拒绝</button>
-                    </div>
-                </div>
-            `).join('');
-        }
+                // 更新待处理请求列表
+                function updatePendingList() {
+                    const requests = Object.keys(pendingRequests);
+                    pendingCount.textContent = requests.length;
+                    pendingCount.className = requests.length > 0 ? 'count' : 'count empty';
         
+                    if (requests.length === 0) {
+                        requestContainer.innerHTML = '<div class="empty-text">暂无连接请求</div>';
+                        return;
+                    }
+        
+                    requestContainer.innerHTML = requests.map(clientId => `
+                        <div class="client-item">
+                            <div class="client-info">
+                                <div class="client-status pending"></div>
+                                <span>客户端 ${clientId}</span>
+                            </div>
+                            <div>
+                                <button class="btn-approve" onclick="approveClient('${clientId}')">同意</button>
+                                <button class="btn-reject" onclick="rejectClient('${clientId}')">拒绝</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+        
+                // 更新在线客户端列表
+                function updateOnlineList() {
+                    const clients = Object.keys(onlineClients);
+                    onlineCount.textContent = clients.length;
+                    onlineCount.className = clients.length > 0 ? 'count' : 'count empty';
+        
+                    if (clients.length === 0) {
+                        onlineContainer.innerHTML = '<div class="empty-text">暂无在线客户端</div>';
+                        return;
+                    }
+        
+                    onlineContainer.innerHTML = clients.map(clientId => `
+                        <div class="client-item">
+                            <div class="client-info">
+                                <div class="client-status"></div>
+                                <span>客户端 ${clientId}</span>
+                            </div>
+                            <button class="btn-disconnect" onclick="disconnectClient('${clientId}')">断开连接</button>
+                        </div>
+                    `).join('');
+                }        
         function approveClient(clientId) {
             if (!roomCode || !localStream) {
                 alert('请先开始屏幕共享');
                 return;
             }
             
+            // 发送批准消息
             ws.send(JSON.stringify({ type: 'join_approve', client_id: clientId }));
-            createPeerConnection(clientId);
-        }
-        
-        function rejectClient(clientId) {
-            ws.send(JSON.stringify({ type: 'join_reject', client_id: clientId }));
+            
+            // 从待处理列表移除，添加到在线列表
             delete pendingRequests[clientId];
-            updateRequestList();
+            onlineClients[clientId] = { connectedAt: Date.now() };
+            
+            // 更新 UI
+            updatePendingList();
+            updateOnlineList();
+            
+            // 创建 WebRTC 连接
+            createPeerConnection(clientId);
+            
+            showNotification(`已批准客户端 ${clientId} 加入`);
         }
         
-        // 纯局域网模式：同一网段内 WebRTC 可以直接通过 host candidate 建立连接
+                function rejectClient(clientId) {
+        
+                    ws.send(JSON.stringify({ type: 'join_reject', client_id: clientId }));
+        
+                    delete pendingRequests[clientId];
+        
+                    updatePendingList();
+        
+                    showNotification(`已拒绝客户端 ${clientId}`);
+        
+                }
+        
+        
+        
+                // 断开指定客户端连接
+        
+                function disconnectClient(clientId) {
+        
+                    const pc = peerConnections[clientId];
+        
+                    if (pc) {
+        
+                        pc.close();
+        
+                        delete peerConnections[clientId];
+        
+                    }
+        
+                    
+        
+                    // 通知服务端断开
+        
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+        
+                        ws.send(JSON.stringify({ 
+        
+                            type: 'disconnect_client', 
+        
+                            client_id: clientId 
+        
+                        }));
+        
+                    }
+        
+                    
+        
+                    // 从在线列表移除
+        
+                    delete onlineClients[clientId];
+        
+                    updateOnlineList();
+        
+                    
+        
+                    showNotification(`已断开客户端 ${clientId}`);
+        
+                }
+        
+        
+        
+                // 纯局域网模式：同一网段内 WebRTC 可以直接通过 host candidate 建立连接
         // 不需要 STUN/TURN 服务器，减少连接建立时间
         function createPeerConnection(clientId) {
             const pc = new RTCPeerConnection({
