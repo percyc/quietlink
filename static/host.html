@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>屏幕共享端 (Host)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; min-height: 100vh; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        
+        .room-info {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .room-code {
+            font-size: 48px;
+            font-weight: bold;
+            color: #4CAF50;
+            text-align: center;
+            letter-spacing: 10px;
+            margin: 10px 0;
+        }
+        .status { text-align: center; color: #666; margin-bottom: 10px; }
+        
+        .btn {
+            padding: 12px 24px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .btn-primary { background: #4CAF50; color: white; }
+        .btn-primary:hover { background: #45a049; }
+        .btn-danger { background: #f44336; color: white; }
+        
+        .video-preview {
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .video-preview video { width: 100%; display: block; }
+        .hidden { display: none !important; }
+        
+        .request-list {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .request-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .request-item:last-child { border-bottom: none; }
+        .btn-approve { background: #4CAF50; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-reject { background: #f44336; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #2196F3;
+            color: white;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="room-info">
+            <p class="status">房间号</p>
+            <div class="room-code" id="roomCodeDisplay">------</div>
+            <div style="text-align: center;">
+                <button id="startBtn" class="btn btn-primary">开始屏幕共享</button>
+                <button id="stopBtn" class="btn btn-danger hidden">停止共享</button>
+            </div>
+        </div>
+        
+        <div id="videoSection" class="video-preview hidden">
+            <video id="localVideo" autoplay playsinline muted></video>
+        </div>
+        
+        <div class="request-list">
+            <h3>加入请求 <span id="requestCount">(0)</span></h3>
+            <div id="requestList">
+                <div style="padding: 20px; color: #999; text-align: center;">暂无加入请求</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification" class="notification hidden"></div>
+    
+    <script>
+        const WS_URL = `wss://${window.location.host}/ws`;
+        
+        let ws = null;
+        let peerConnections = {};
+        let localStream = null;
+        let roomCode = null;
+        let pendingRequests = {};
+        
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+        const videoSection = document.getElementById('videoSection');
+        const localVideo = document.getElementById('localVideo');
+        const requestList = document.getElementById('requestList');
+        const requestCount = document.getElementById('requestCount');
+        const notification = document.getElementById('notification');
+        
+        function connectWebSocket() {
+            ws = new WebSocket(`${WS_URL}/host`);
+            
+            ws.onopen = () => console.log('[WS] Connected');
+            
+            ws.onmessage = async (event) => {
+                const data = JSON.parse(event.data);
+                console.log('[WS] Received:', data.type);
+                
+                if (data.type === 'room_created') {
+                    roomCode = data.room_code;
+                    roomCodeDisplay.textContent = roomCode;
+                }
+                else if (data.type === 'join_request') {
+                    handleJoinRequest(data.client_id);
+                }
+                else if (data.type === 'answer') {
+                    await handleAnswer(data.client_id, data);
+                }
+                else if (data.type === 'ice_candidate') {
+                    await handleIceCandidate(data.client_id, data);
+                }
+            };
+            
+            ws.onclose = () => console.log('[WS] Disconnected');
+        }
+        
+        async function startScreenShare() {
+            try {
+                localStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: 'always', displaySurface: 'monitor' },
+                    audio: false
+                });
+                
+                localVideo.srcObject = localStream;
+                videoSection.classList.remove('hidden');
+                startBtn.classList.add('hidden');
+                stopBtn.classList.remove('hidden');
+                
+                ws.send(JSON.stringify({ type: 'create_room' }));
+                
+                localStream.getVideoTracks()[0].onended = stopScreenShare;
+            } catch (error) {
+                alert('无法获取屏幕权限: ' + error.message);
+            }
+        }
+        
+        function stopScreenShare() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            
+            Object.values(peerConnections).forEach(pc => pc.close());
+            peerConnections = {};
+            
+            videoSection.classList.add('hidden');
+            startBtn.classList.remove('hidden');
+            stopBtn.classList.add('hidden');
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'close_room' }));
+            }
+            
+            roomCode = null;
+            roomCodeDisplay.textContent = '------';
+            pendingRequests = {};
+            updateRequestList();
+            
+            connectWebSocket();
+        }
+        
+        function handleJoinRequest(clientId) {
+            pendingRequests[clientId] = true;
+            updateRequestList();
+            showNotification(`收到来自客户端 ${clientId} 的加入请求`);
+        }
+        
+        function updateRequestList() {
+            const requests = Object.keys(pendingRequests);
+            requestCount.textContent = `(${requests.length})`;
+            
+            if (requests.length === 0) {
+                requestList.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">暂无加入请求</div>';
+                return;
+            }
+            
+            requestList.innerHTML = requests.map(clientId => `
+                <div class="request-item">
+                    <span>客户端 ${clientId}</span>
+                    <div>
+                        <button class="btn-approve" onclick="approveClient('${clientId}')">同意</button>
+                        <button class="btn-reject" onclick="rejectClient('${clientId}')">拒绝</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function approveClient(clientId) {
+            if (!roomCode || !localStream) {
+                alert('请先开始屏幕共享');
+                return;
+            }
+            
+            ws.send(JSON.stringify({ type: 'join_approve', client_id: clientId }));
+            createPeerConnection(clientId);
+        }
+        
+        function rejectClient(clientId) {
+            ws.send(JSON.stringify({ type: 'join_reject', client_id: clientId }));
+            delete pendingRequests[clientId];
+            updateRequestList();
+        }
+        
+        // 纯局域网模式：同一网段内 WebRTC 可以直接通过 host candidate 建立连接
+        // 不需要 STUN/TURN 服务器，减少连接建立时间
+        function createPeerConnection(clientId) {
+            const pc = new RTCPeerConnection({
+                // iceServers 留空，强制使用 host 类型 candidate（本地直连）
+                iceServers: []
+            });
+            
+            peerConnections[clientId] = pc;
+            
+            if (localStream) {
+                localStream.getTracks().forEach(track => {
+                    pc.addTrack(track, localStream);
+                });
+            }
+            
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    ws.send(JSON.stringify({
+                        type: 'ice_candidate',
+                        client_id: clientId,
+                        target: 'client',
+                        candidate: event.candidate.candidate,
+                        sdpMid: event.candidate.sdpMid,
+                        sdpMLineIndex: event.candidate.sdpMLineIndex
+                    }));
+                }
+            };
+            
+            pc.createOffer().then(offer => {
+                pc.setLocalDescription(offer);
+                ws.send(JSON.stringify({
+                    type: 'offer',
+                    client_id: clientId,
+                    sdp: offer.sdp,
+                    sdpType: offer.type
+                }));
+            });
+        }
+        
+        async function handleAnswer(clientId, data) {
+            const pc = peerConnections[clientId];
+            if (pc) {
+                await pc.setRemoteDescription(new RTCSessionDescription({
+                    type: data.sdpType,
+                    sdp: data.sdp
+                }));
+            }
+        }
+        
+        async function handleIceCandidate(clientId, data) {
+            const pc = peerConnections[clientId];
+            if (pc) {
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate({
+                        candidate: data.candidate,
+                        sdpMid: data.sdpMid,
+                        sdpMLineIndex: data.sdpMLineIndex
+                    }));
+                } catch (e) {
+                    console.log('[Host] ICE error (ignored):', e.message);
+                }
+            }
+        }
+        
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.remove('hidden');
+            setTimeout(() => notification.classList.add('hidden'), 3000);
+        }
+        
+        startBtn.addEventListener('click', startScreenShare);
+        stopBtn.addEventListener('click', stopScreenShare);
+        
+        connectWebSocket();
+    </script>
+</body>
+</html>
