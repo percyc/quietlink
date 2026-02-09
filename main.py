@@ -324,18 +324,133 @@ async def get_index():
     <html>
     <head>
         <title>WebRTC 屏幕共享</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body { font-family: Arial; max-width: 600px; margin: 50px auto; text-align: center; }
-            .btn { padding: 15px 30px; margin: 10px; font-size: 18px; cursor: pointer; border: none; border-radius: 5px; }
-            .host { background: #4CAF50; color: white; }
-            .client { background: #2196F3; color: white; }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            .container {
+                background: white;
+                border-radius: 20px;
+                padding: 40px 30px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                max-width: 500px;
+                width: 100%;
+                text-align: center;
+            }
+            h1 {
+                color: #333;
+                font-size: 28px;
+                margin-bottom: 15px;
+                font-weight: 700;
+            }
+            p {
+                color: #666;
+                font-size: 16px;
+                margin-bottom: 30px;
+                line-height: 1.5;
+            }
+            .btn {
+                display: block;
+                width: 100%;
+                padding: 18px 30px;
+                margin: 12px 0;
+                font-size: 18px;
+                font-weight: 600;
+                cursor: pointer;
+                border: none;
+                border-radius: 12px;
+                text-decoration: none;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            }
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            }
+            .btn:active {
+                transform: translateY(0);
+            }
+            .host {
+                background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+                color: white;
+            }
+            .host:hover {
+                background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+            }
+            .client {
+                background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+                color: white;
+            }
+            .client:hover {
+                background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+            }
+            .icon {
+                font-size: 48px;
+                margin-bottom: 15px;
+                display: block;
+            }
+            .info {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid #eee;
+                color: #999;
+                font-size: 14px;
+            }
+            /* 移动端优化 */
+            @media (max-width: 480px) {
+                .container {
+                    padding: 30px 20px;
+                    border-radius: 15px;
+                }
+                h1 {
+                    font-size: 24px;
+                }
+                p {
+                    font-size: 15px;
+                }
+                .btn {
+                    padding: 16px 25px;
+                    font-size: 17px;
+                }
+                .icon {
+                    font-size: 40px;
+                }
+            }
+            /* 超小屏幕 */
+            @media (max-width: 360px) {
+                h1 {
+                    font-size: 22px;
+                }
+                .btn {
+                    padding: 14px 20px;
+                    font-size: 16px;
+                }
+            }
         </style>
     </head>
     <body>
-        <h1>WebRTC 局域网屏幕共享</h1>
-        <p>请选择您的角色：</p>
-        <a href="/static/host.html"><button class="btn host">我是共享端 (Host)</button></a>
-        <a href="/static/client.html"><button class="btn client">我是观看端 (Client)</button></a>
+        <div class="container">
+            <span class="icon">🖥️</span>
+            <h1>WebRTC 屏幕共享</h1>
+            <p>局域网实时屏幕共享系统<br>无需互联网，安全高效</p>
+            <a href="/static/host.html" class="btn host">
+                📤 我是共享端 (Host)
+            </a>
+            <a href="/static/client.html" class="btn client">
+                📥 我是观看端 (Client)
+            </a>
+            <div class="info">
+                纯内网运行 | 自动打洞 | 实时传输
+            </div>
+        </div>
     </body>
     </html>
     """)
