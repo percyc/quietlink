@@ -163,6 +163,15 @@
             border-radius: 5px;
             z-index: 1000;
         }
+        
+        .btn-home {
+            background: #757575;
+            color: white;
+            margin-top: 10px;
+        }
+        .btn-home:hover {
+            background: #616161;
+        }
     </style>
 </head>
 <body>
@@ -173,6 +182,7 @@
             <div style="text-align: center;">
                 <button id="startBtn" class="btn btn-primary">开始屏幕共享</button>
                 <button id="stopBtn" class="btn btn-danger hidden">停止共享</button>
+                <button id="homeBtn" class="btn btn-home" onclick="goHome()">🏠 返回主页</button>
             </div>
         </div>
         
@@ -223,11 +233,14 @@
         
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
+        const homeBtn = document.getElementById('homeBtn');
         const roomCodeDisplay = document.getElementById('roomCodeDisplay');
         const videoSection = document.getElementById('videoSection');
         const localVideo = document.getElementById('localVideo');
-        const requestList = document.getElementById('requestList');
-        const requestCount = document.getElementById('requestCount');
+        const requestContainer = document.getElementById('requestContainer');
+        const onlineContainer = document.getElementById('onlineContainer');
+        const pendingCount = document.getElementById('pendingCount');
+        const onlineCount = document.getElementById('onlineCount');
         const notification = document.getElementById('notification');
         
         function connectWebSocket() {
@@ -268,6 +281,7 @@
                 videoSection.classList.remove('hidden');
                 startBtn.classList.add('hidden');
                 stopBtn.classList.remove('hidden');
+                homeBtn.classList.add('hidden');
                 
                 ws.send(JSON.stringify({ type: 'create_room' }));
                 
@@ -289,6 +303,7 @@
             videoSection.classList.add('hidden');
             startBtn.classList.remove('hidden');
             stopBtn.classList.add('hidden');
+            homeBtn.classList.remove('hidden');
             
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ type: 'close_room' }));
@@ -512,6 +527,27 @@
             notification.textContent = message;
             notification.classList.remove('hidden');
             setTimeout(() => notification.classList.add('hidden'), 3000);
+        }
+
+        // 返回主页
+        function goHome() {
+            // 如果正在共享，先停止
+            if (localStream) {
+                stopScreenShare();
+            }
+            
+            // 清理状态
+            pendingRequests = {};
+            onlineClients = {};
+            updatePendingList();
+            updateOnlineList();
+            
+            // 重置房间号显示
+            roomCode = null;
+            roomCodeDisplay.textContent = '------';
+            
+            // 跳转到首页
+            window.location.href = '/';
         }
         
         startBtn.addEventListener('click', startScreenShare);

@@ -123,6 +123,21 @@
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+        .btn-home {
+            background: #757575;
+            color: white;
+        }
+        .btn-home:hover {
+            background: #616161;
+        }
+        .btn-fullscreen {
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+        }
+        .btn-fullscreen:hover {
+            background: #444;
+        }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -136,9 +151,7 @@
                    oninput="this.value = this.value.replace(/\D/g, '')">
             <br>
             <button id="joinBtn" class="btn btn-primary" onclick="joinRoom()">加入</button>
-            <p style="margin-top: 20px; color: #666;">
-                <a href="/">← 返回首页</a>
-            </p>
+            <button class="btn btn-home" onclick="goHome()">🏠 返回首页</button>
         </div>
         
         <div id="waitingSection" class="status-message" style="display: none;">
@@ -151,10 +164,17 @@
             <div class="room-info">
                 <p>正在观看</p>
                 <div class="room-code">房间: <span id="watchRoomCode"></span></div>
+                <div style="margin-top: 15px;">
+                    <button class="btn btn-home" onclick="goHome()">🏠 返回首页</button>
+                </div>
             </div>
             <div class="video-container">
                 <video id="remoteVideo" autoplay playsinline muted></video>
                 <div id="playHint" class="play-hint">▶ 点击播放</div>
+                <button id="fullscreenBtn" class="btn btn-fullscreen" onclick="toggleFullscreen()" 
+                        style="position: absolute; bottom: 15px; right: 15px; padding: 8px 15px; font-size: 14px;">
+                    ⛶ 全屏
+                </button>
             </div>
         </div>
         
@@ -162,6 +182,7 @@
             <h3 class="error">❌ 加入请求被拒绝</h3>
             <p>主机拒绝了您的加入请求</p>
             <button class="btn btn-primary" onclick="goBack()">返回重新加入</button>
+            <button class="btn btn-home" onclick="goHome()">🏠 返回首页</button>
         </div>
     </div>
     
@@ -337,6 +358,22 @@
             playHint.classList.remove('show');
         }
         
+        // 返回主页
+        function goHome() {
+            // 如果正在观看，先断开连接
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            
+            // 跳转到首页
+            window.location.href = '/';
+        }
+        
         function showNotification(message, type = '') {
             notification.textContent = message;
             notification.className = 'notification';
@@ -385,6 +422,33 @@
                 remoteVideo.play()
                     .then(() => playHint.classList.remove('show'))
                     .catch(() => playHint.classList.add('show'));
+            }
+        });
+        
+        // 全屏功能
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        
+        function toggleFullscreen() {
+            const container = document.querySelector('.video-container');
+            
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().then(() => {
+                    fullscreenBtn.textContent = '⛶ 退出全屏';
+                }).catch(err => {
+                    console.error('全屏失败:', err.message);
+                    showNotification('全屏失败，请重试', 'error');
+                });
+            } else {
+                document.exitFullscreen().then(() => {
+                    fullscreenBtn.textContent = '⛶ 全屏';
+                });
+            }
+        }
+        
+        // 监听全屏状态变化（支持按 ESC 退出全屏）
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                fullscreenBtn.textContent = '⛶ 全屏';
             }
         });
     </script>
