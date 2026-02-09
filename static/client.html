@@ -150,6 +150,19 @@
             height: 100vh;
             object-fit: contain;
         }
+        /* 全屏模式下确保按钮可见 */
+        .video-container:fullscreen button,
+        .video-container:-webkit-full-screen button {
+            pointer-events: auto !important;
+        }
+        /* 视频容器悬停时显示控制按钮（正常模式） */
+        .video-container:not(:fullscreen):not(:-webkit-full-screen) button {
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        .video-container:not(:fullscreen):not(:-webkit-full-screen):hover button {
+            opacity: 1;
+        }
         .play-hint {
             position: absolute;
             top: 50%;
@@ -214,6 +227,23 @@
         }
         .hidden { display: none !important; }
         
+        /* 音频状态指示器 */
+        .audio-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+        .audio-icon {
+            font-size: 18px;
+        }
+        
         /* 移动端适配 */
         @media (max-width: 768px) {
             body { padding: 15px; }
@@ -268,25 +298,38 @@
             <div class="spinner"></div>
             <h3 id="waitingTitle">等待主机确认...</h3>
             <p id="waitingText">房间号: <span id="waitingRoomCode"></span></p>
+            <p style="margin-top: 10px; color: #999; font-size: 14px;">
+                客户端 ID: <span id="waitingClientId" style="font-family: monospace; font-weight: bold; color: #2196F3;"></span>
+            </p>
         </div>
         
         <div id="watchSection" class="watch-section">
             <div class="room-info">
                 <p>正在观看</p>
                 <div class="room-code">房间: <span id="watchRoomCode"></span></div>
+                <div id="audioIndicator" class="audio-indicator" style="display: none;">
+                    <span class="audio-icon">🔊</span>
+                    <span>音频传输中</span>
+                </div>
                 <div style="margin-top: 15px;">
                     <button class="btn btn-home" onclick="goHome()">🏠 返回首页</button>
                 </div>
             </div>
             <div class="video-container">
-                <video id="remoteVideo" autoplay playsinline muted 
+                <video id="remoteVideo" autoplay playsinline
                        webkit-playsinline
                        style="width: 100%; height: 100%; object-fit: contain;"></video>
                 <div id="playHint" class="play-hint">▶ 点击播放</div>
-                <button id="fullscreenBtn" class="btn btn-fullscreen" onclick="toggleFullscreen()" 
-                        style="position: absolute; bottom: 15px; right: 15px; padding: 8px 15px; font-size: 14px; z-index: 10;">
-                    ⛶ 全屏
-                </button>
+                <div style="position: absolute; bottom: 15px; left: 15px; right: 15px; display: flex; gap: 10px; justify-content: space-between; z-index: 100; pointer-events: none;">
+                    <button id="muteBtn" class="btn btn-fullscreen" onclick="toggleMute()" 
+                            style="padding: 8px 15px; font-size: 14px; display: none; pointer-events: auto;">
+                        🔊 开启声音
+                    </button>
+                    <button id="fullscreenBtn" class="btn btn-fullscreen" onclick="toggleFullscreen()" 
+                            style="padding: 8px 15px; font-size: 14px; pointer-events: auto;">
+                        ⛶ 全屏
+                    </button>
+                </div>
             </div>
         </div>
         
@@ -346,6 +389,8 @@
                 
                 if (data.type === 'client_id') {
                     clientId = data.client_id;
+                    document.getElementById('waitingClientId').textContent = clientId;
+                    console.log('[Client] Client ID:', clientId);
                 }
                 else if (data.type === 'join_approved') {
                     waitingTitle.textContent = '等待主机建立连接...';
@@ -380,6 +425,27 @@
             peerConnection.ontrack = async (event) => {
                 console.log('[WebRTC] ontrack');
                 remoteVideo.srcObject = event.streams[0];
+                
+                // 检查是否有音频轨道
+                const stream = event.streams[0];
+                const hasAudio = stream.getAudioTracks().length > 0;
+                
+                if (hasAudio) {
+                    // 显示音频指示器和静音按钮
+                    document.getElementById('audioIndicator').style.display = 'inline-flex';
+                    document.getElementById('muteBtn').style.display = 'inline-block';
+                    document.getElementById('muteBtn').textContent = '🔊 开启声音';
+                    console.log('[Audio] Audio track received');
+                    
+                    // 保持静音状态，等待用户手动开启
+                    remoteVideo.muted = true;
+                    console.log('[Audio] Muted by default');
+                } else {
+                    // 隐藏音频相关 UI
+                    document.getElementById('audioIndicator').style.display = 'none';
+                    document.getElementById('muteBtn').style.display = 'none';
+                    console.log('[Audio] No audio track');
+                }
                 
                 // 尝试自动播放
                 try {
@@ -467,7 +533,10 @@
             rejectedSection.style.display = 'none';
             roomInput.value = '';
             remoteVideo.srcObject = null;
+            remoteVideo.muted = true; // 重置为静音
             playHint.classList.remove('show');
+            document.getElementById('audioIndicator').style.display = 'none';
+            document.getElementById('muteBtn').style.display = 'none';
         }
         
         // 返回主页
@@ -596,6 +665,23 @@
         remoteVideo.addEventListener('webkitendfullscreen', () => {
             fullscreenBtn.textContent = '⛶ 全屏';
         });
+        
+        // 静音/取消静音功能
+        function toggleMute() {
+            console.log('[Audio] Toggle mute clicked, current muted:', remoteVideo.muted);
+            const muteBtn = document.getElementById('muteBtn');
+            if (remoteVideo.muted) {
+                remoteVideo.muted = false;
+                muteBtn.textContent = '🔇 静音';
+                showNotification('🔊 音频已开启', 'success');
+                console.log('[Audio] Unmuted');
+            } else {
+                remoteVideo.muted = true;
+                muteBtn.textContent = '🔊 开启声音';
+                showNotification('🔇 音频已静音', 'info');
+                console.log('[Audio] Muted');
+            }
+        }
     </script>
 </body>
 </html>
