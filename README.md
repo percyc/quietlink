@@ -4,6 +4,10 @@
 
 **[English](README_EN.md)** | [![Demo](https://img.shields.io/badge/Demo-Live-green)](https://quietlink.onrender.com/)
 
+## 在线体验
+
+访问 [https://quietlink.onrender.com/](https://quietlink.onrender.com/) 体验在线 Demo。
+
 ## 功能特点
 
 - 📺 **屏幕共享**：主机端可共享整个屏幕或单个窗口
@@ -33,10 +37,6 @@
 # HTTPS 模式
 ./start.sh 8443 https
 ```
-
-## 在线体验
-
-访问 [https://quietlink.onrender.com/](https://quietlink.onrender.com/) 体验在线 Demo。
 
 ## 云端部署
 

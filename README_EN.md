@@ -4,6 +4,10 @@ A WebRTC-based pure LAN screen sharing system with audio/video transmission supp
 
 [中文](README.md) | [![Demo](https://img.shields.io/badge/Demo-Live-green)](https://quietlink.onrender.com/)
 
+## Online Demo
+
+Visit [https://quietlink.onrender.com/](https://quietlink.onrender.com/) to try the online demo.
+
 ## Features
 
 - 📺 **Screen Sharing**: Host can share entire screen or single window
@@ -33,10 +37,6 @@ Examples:
 # HTTPS mode
 ./start.sh 8443 https
 ```
-
-## Online Demo
-
-Visit [https://quietlink.onrender.com/](https://quietlink.onrender.com/) to try the online demo.
 
 ## Cloud Deployment
 
