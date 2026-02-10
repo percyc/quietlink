@@ -1,7 +1,7 @@
 [project]
-name = "webrtc-screen-share"
+name = "quietlink"
 version = "0.1.0"
-description = "Add your description here"
+description = "WebRTC 局域网屏幕共享系统，支持音视频传输"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [

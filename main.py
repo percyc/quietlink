@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, Optional
 import uvicorn
 
-app = FastAPI(title="WebRTC Screen Share Server")
+app = FastAPI(title="QuietLink Server")
 
 # CORS配置，允许所有 origins
 app.add_middleware(
@@ -323,7 +323,7 @@ async def get_index():
     return HTMLResponse("""
     <html>
     <head>
-        <title>WebRTC 屏幕共享</title>
+        <title>QuietLink</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -439,7 +439,7 @@ async def get_index():
     <body>
         <div class="container">
             <span class="icon">🖥️</span>
-            <h1>WebRTC 屏幕共享</h1>
+            <h1>QuietLink</h1>
             <p>局域网实时屏幕共享系统<br>无需互联网，安全高效</p>
             <a href="/static/host.html" class="btn host">
                 📤 我是共享端 (Host)
@@ -462,7 +462,7 @@ if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
     https = len(sys.argv) > 2 and sys.argv[2] == "https"
     protocol = "https" if https else "http"
-    print(f"\n🚀 WebRTC Screen Share Server started on {protocol}://localhost:{port}")
+    print(f"\n🚀 QuietLink Server started on {protocol}://localhost:{port}")
     print(f"📱 Host: {protocol}://localhost:{port}/host.html")
     print(f"📺 Client: {protocol}://localhost:{port}/client.html\n")
     if https:

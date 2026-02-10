@@ -1,4 +1,4 @@
-# WebRTC 局域网屏幕共享
+# QuietLink - WebRTC 局域网屏幕共享
 
 基于 WebRTC 的纯局域网屏幕共享系统，支持音视频传输，无需互联网连接。
 

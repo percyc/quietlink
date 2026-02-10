@@ -1,4 +1,4 @@
-# WebRTC 局域网屏幕共享 - 项目上下文
+# QuietLink - WebRTC 局域网屏幕共享 - 项目上下文
 
 ## 项目概述
 
@@ -33,7 +33,7 @@
 ## 项目结构
 
 ```
-webrtc-screen-share/
+quietlink/
 ├── main.py              # FastAPI 信令服务器（478行）
 ├── start.sh             # 启动脚本，自动安装依赖和生成证书
 ├── pyproject.toml       # Python 依赖配置
