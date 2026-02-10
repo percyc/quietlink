@@ -2,7 +2,11 @@
 
 基于 WebRTC 的纯局域网屏幕共享系统，支持音视频传输，无需互联网连接。
 
-**[English](README_EN.md)** | ## 功能特点
+**[English](README_EN.md)** | [![Demo](https://img.shields.io/badge/Demo-Live-green)](https://quietlink.onrender.com/)
+
+**[English](README_EN.md)** | 
+
+## 功能特点
 
 - 📺 **屏幕共享**：主机端可共享整个屏幕或单个窗口
 - 🔊 **音频传输**：支持系统音频共享（Chrome/Edge），可选启用
