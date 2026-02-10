@@ -2,6 +2,8 @@
 
 基于 WebRTC 的纯局域网屏幕共享系统，支持音视频传输，无需互联网连接。
 
+[![Demo](https://img.shields.io/badge/Demo-Live-green)](https://quietlink.onrender.com/)
+
 ## 功能特点
 
 - 📺 **屏幕共享**：主机端可共享整个屏幕或单个窗口
@@ -32,9 +34,26 @@
 ./start.sh 8443 https
 ```
 
+## 在线体验
+
+访问 [https://quietlink.onrender.com/](https://quietlink.onrender.com/) 体验在线 Demo。
+
+## 云端部署
+
+项目支持 Render 部署。
+
+### Render 部署
+
+1. 连接 GitHub 仓库到 Render
+2. 创建新的 Web Service
+3. 选择 Python 环境，自动检测依赖
+4. 部署完成获得 `https://<app-name>.onrender.com` 地址
+
+**注意**：当前项目设计为局域网使用。在公网环境部署后，WebRTC P2P 连接需要额外的 STUN/TURN 服务器支持。公网部署仅供体验，建议在内网环境使用以获得最佳性能。
+
 ## 系统要求
 
-- Python 3.8+
+- Python 3.14+
 - [uv](https://github.com/astral-sh/uv)（自动安装）
 
 ## 使用说明
