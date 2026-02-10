@@ -4,8 +4,6 @@
 
 **[English](README_EN.md)** | [![Demo](https://img.shields.io/badge/Demo-Live-green)](https://quietlink.onrender.com/)
 
-**[English](README_EN.md)** | 
-
 ## 功能特点
 
 - 📺 **屏幕共享**：主机端可共享整个屏幕或单个窗口

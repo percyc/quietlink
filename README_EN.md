@@ -2,7 +2,9 @@
 
 A WebRTC-based pure LAN screen sharing system with audio/video transmission support, no internet connection required.
 
-[中文](README.md) | ## Features
+[中文](README.md) | [![Demo](https://img.shields.io/badge/Demo-Live-green)](https://quietlink.onrender.com/)
+
+## Features
 
 - 📺 **Screen Sharing**: Host can share entire screen or single window
 - 🔊 **Audio Transmission**: Supports system audio sharing (Chrome/Edge), optional enable
