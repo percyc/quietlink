@@ -1,0 +1,10 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+certs/
+.DS_Store
+AGENTS.md
+README.md
