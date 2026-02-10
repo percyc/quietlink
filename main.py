@@ -103,6 +103,10 @@ class ConnectionManager:
         if code in self.rooms:
             for client_id, ws in list(self.rooms[code]["clients"].items()):
                 try:
+                    ws.send_json({"type": "host_disconnected"})
+                except:
+                    pass
+                try:
                     ws.close()
                 except:
                     pass
@@ -164,6 +168,15 @@ async def websocket_host(websocket: WebSocket):
                 client_ws = manager.get_client(code, client_id)
                 if client_ws:
                     await client_ws.send_json({"type": "join_rejected"})
+
+            elif data["type"] == "disconnect_client":
+                client_id = data["client_id"]
+                print(f"[Host] Disconnecting client {client_id} in room {code}")
+                manager.remove_client(code, client_id)
+                client_ws = manager.get_client(code, client_id)
+                if client_ws:
+                    await client_ws.send_json({"type": "disconnected_by_host"})
+                    print(f"[Host] Sent disconnected_by_host to client {client_id}")
 
             elif data["type"] == "offer":
                 client_id = data["client_id"]

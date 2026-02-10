@@ -367,6 +367,13 @@
             <button class="btn btn-primary" onclick="goBack()" data-i18n="goBack">返回重新加入</button>
             <button class="btn btn-home" onclick="goHome()" data-i18n="home">🏠 返回首页</button>
         </div>
+
+        <div id="disconnectedSection" class="status-message" style="display: none;">
+            <h3 class="error" data-i18n="hostDisconnected">❌ 主机已断开连接</h3>
+            <p data-i18n="hostDisconnectedMessage">主机已结束共享会话</p>
+            <button class="btn btn-primary" onclick="goBack()" data-i18n="goBack">返回重新加入</button>
+            <button class="btn btn-home" onclick="goHome()" data-i18n="home">🏠 返回首页</button>
+        </div>
     </div>
     
     <div id="notification" class="notification hidden"></div>
@@ -403,7 +410,9 @@
                 connectionSuccess: '连接成功！',
                 audioEnabled: '🔊 音频已开启',
                 audioMuted: '🔇 音频已静音',
-                fullscreenFailed: '全屏失败，请重试'
+                fullscreenFailed: '全屏失败，请重试',
+                hostDisconnected: '❌ 主机已断开连接',
+                hostDisconnectedMessage: '主机已结束共享会话'
             },
             en: {
                 langBtn: '中文',
@@ -432,7 +441,9 @@
                 connectionSuccess: 'Connected successfully!',
                 audioEnabled: '🔊 Audio enabled',
                 audioMuted: '🔇 Audio muted',
-                fullscreenFailed: 'Fullscreen failed, please try again'
+                fullscreenFailed: 'Fullscreen failed, please try again',
+                hostDisconnected: '❌ Host disconnected',
+                hostDisconnectedMessage: 'Host has ended the sharing session'
             }
         };
         
@@ -446,6 +457,7 @@
         const waitingSection = document.getElementById('waitingSection');
         const watchSection = document.getElementById('watchSection');
         const rejectedSection = document.getElementById('rejectedSection');
+        const disconnectedSection = document.getElementById('disconnectedSection');
         const roomInput = document.getElementById('roomInput');
         const waitingRoomCode = document.getElementById('waitingRoomCode');
         const watchRoomCode = document.getElementById('watchRoomCode');
@@ -525,6 +537,9 @@
                 else if (data.type === 'join_rejected') {
                     showRejected();
                 }
+                else if (data.type === 'host_disconnected' || data.type === 'disconnected_by_host') {
+                    showDisconnected();
+                }
                 else if (data.type === 'offer') {
                     await handleOffer(data);
                 }
@@ -603,9 +618,13 @@
                     }));
                 }
             };
-            
+
             peerConnection.oniceconnectionstatechange = () => {
                 console.log('[WebRTC] ICE:', peerConnection.iceConnectionState);
+                if (peerConnection.iceConnectionState === 'disconnected' ||
+                    peerConnection.iceConnectionState === 'failed') {
+                    showDisconnected();
+                }
             };
             
             await peerConnection.setRemoteDescription(new RTCSessionDescription({
@@ -644,6 +663,22 @@
             rejectedSection.style.display = 'block';
             ws.close();
         }
+
+        function showDisconnected() {
+            loginSection.style.display = 'none';
+            waitingSection.style.display = 'none';
+            watchSection.classList.remove('active');
+            rejectedSection.style.display = 'none';
+            disconnectedSection.style.display = 'block';
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
         
         function goBack() {
             if (peerConnection) {
@@ -658,6 +693,7 @@
             waitingSection.style.display = 'none';
             watchSection.classList.remove('active');
             rejectedSection.style.display = 'none';
+            disconnectedSection.style.display = 'none';
             roomInput.value = '';
             remoteVideo.srcObject = null;
             remoteVideo.muted = true; // 重置为静音
