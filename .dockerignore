@@ -7,4 +7,6 @@ __pycache__
 certs/
 .DS_Store
 AGENTS.md
-README.md
+tests/
+*.md
+!README.md

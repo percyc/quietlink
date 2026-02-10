@@ -4,9 +4,44 @@ version = "0.1.0"
 description = "WebRTC 局域网屏幕共享系统，支持音视频传输"
 readme = "README.md"
 requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
     "fastapi>=0.128.5",
     "python-multipart>=0.0.22",
     "uvicorn>=0.40.0",
     "websockets>=16.0",
 ]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Multimedia :: Video :: Display",
+]
+
+[project.urls]
+Homepage = "https://github.com/percyc/quietlink"
+Documentation = "https://github.com/percyc/quietlink#readme"
+Repository = "https://github.com/percyc/quietlink"
+Issues = "https://github.com/percyc/quietlink/issues"
+
+[project.scripts]
+quietlink = "quietlink.cli:main"
+
+[build-system]
+requires = ["setuptools>=75.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["quietlink"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+quietlink = ["static/**"]
+
+[dependency-groups]
+dev = ["pytest>=8.0.0", "ruff>=0.6.0", "build>=1.0.0", "twine>=5.0.0", "setuptools>=75.0.0"]
