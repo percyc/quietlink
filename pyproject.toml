@@ -1,6 +1,6 @@
 [project]
 name = "quietlink"
-version = "0.1.0"
+version = "1.0.0"
 description = "WebRTC 局域网屏幕共享系统，支持音视频传输"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -28,6 +28,7 @@ Homepage = "https://github.com/percyc/quietlink"
 Documentation = "https://github.com/percyc/quietlink#readme"
 Repository = "https://github.com/percyc/quietlink"
 Issues = "https://github.com/percyc/quietlink/issues"
+Changelog = "https://github.com/percyc/quietlink/blob/main/README.md#更新日志"
 
 [project.scripts]
 quietlink = "quietlink.cli:main"

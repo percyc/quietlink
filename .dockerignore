@@ -10,3 +10,6 @@ AGENTS.md
 tests/
 *.md
 !README.md
+dist/
+build/
+*.egg-info

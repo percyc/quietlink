@@ -1,12 +1,109 @@
-# QuietLink - WebRTC 局域网屏幕共享
+# QuietLink v1.0.0 - WebRTC 局域网屏幕共享
 
 基于 WebRTC 的纯局域网屏幕共享系统，支持音视频传输，无需互联网连接。
 
-**[English](README_EN.md)** | [![Demo](https://img.shields.io/badge/Demo-Live-green)](https://quietlink.onrender.com/)
+**[English](README_EN.md)** | [![PyPI version](https://badge.fury.io/py/percyc/quietlink.svg)](https://pypi.org/project/quietlink/) | [![Docker Hub](https://img.shields.io/docker/v/percyc/quietlink)](https://hub.docker.com/r/percyc/quietlink) | [![Demo](https://img.shields.io/badge/Demo-Live-green)](https://quietlink.onrender.com/)
 
 ## 在线体验
 
 访问 [https://quietlink.onrender.com/](https://quietlink.onrender.com/) 体验在线 Demo。
+
+## 安装方式
+
+### 方式一：使用 PyPI 安装（推荐）
+
+```bash
+# 使用 pip 安装
+pip install quietlink==1.0.0
+
+# 或使用 uv 安装（更快）
+uv pip install quietlink==1.0.0
+
+# 启动服务
+quietlink --port 8080
+quietlink --port 9000 --https
+```
+
+### 方式二：使用 Docker 部署
+
+#### 单架构部署（快速）
+
+```bash
+# 拉取并运行
+docker run -d -p 8080:8080 \
+  -e PORT=8080 \
+  -e HTTPS=false \
+  --name quietlink \
+  percyc/quietlink:v1.0.0
+
+# HTTPS 模式
+docker run -d -p 8443:8443 \
+  -e PORT=8443 \
+  -e HTTPS=true \
+  --name quietlink-https \
+  percyc/quietlink:v1.0.0
+```
+
+#### 多架构部署（支持 AMD64 + ARM64）
+
+```bash
+# 使用 buildx 构建（首次需要启用）
+docker buildx create --use
+
+# 自动构建并推送多架构
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t percyc/quietlink:v1.0.0 \
+  -t percyc/quietlink:latest \
+  --push .
+
+# 或直接拉取使用
+docker run -d -p 8080:8080 \
+  -e PORT=8080 \
+  -e HTTPS=false \
+  --name quietlink \
+  percyc/quietlink:latest
+```
+
+#### 使用 Docker Compose
+
+```bash
+# 复制提供的 docker-compose.yml
+docker-compose up -d
+
+# 或自定义配置
+cat > docker-compose.yml << 'EOF'
+version: '3.8'
+services:
+  quietlink:
+    image: percyc/quietlink:latest
+    container_name: quietlink
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - HTTPS=false
+    restart: unless-stopped
+EOF
+
+docker-compose up -d
+```
+
+### 方式三：本地开发
+
+```bash
+# 克隆仓库
+git clone https://github.com/percyc/quietlink.git
+cd quietlink
+
+# 使用 uv 同步依赖
+uv sync
+
+# 启动开发服务器
+./start.sh
+./start.sh 9000 https
+```
+
+---
 
 ## 功能特点
 
@@ -18,55 +115,41 @@
 - 📴 **纯内网运行**：无需 STUN/TURN 服务器，无需互联网
 - 📱 **移动端支持**：支持手机全屏观看，响应式设计
 - 🎨 **美观界面**：现代化渐变设计，优秀的用户体验
+- 🌐 **多架构支持**：Docker 镜像支持 AMD64 和 ARM64（Mac、树莓派等）
+- 🔧 **简单部署**：PyPI 一键安装，Docker 秒级启动
 
-## 快速开始
+---
+
+## 命令行参数
 
 ```bash
-./start.sh [端口] [https]
+quietlink [选项]
+
+选项：
+  -h, --help       显示帮助信息
+  --port, -p PORT   服务器端口（默认: 8080）
+  --https           启用 HTTPS 模式（自动生成自签名证书）
+
+示例:
+  quietlink                    在默认端口 8080 启动
+  quietlink --port 9000        在端口 9000 启动
+  quietlink --https             启用 HTTPS 模式
 ```
 
-参数说明：
-- `端口`：服务器端口，默认 8080
-- `https`：可选，启用 HTTPS（自动生成自签名证书）
-
-示例：
-```bash
-# HTTP 模式
-./start.sh
-
-# HTTPS 模式
-./start.sh 8443 https
-```
-
-## 云端部署
-
-项目支持 Render 部署。
-
-### Render 部署
-
-1. 连接 GitHub 仓库到 Render
-2. 创建新的 Web Service
-3. 选择 Python 环境，自动检测依赖
-4. 部署完成获得 `https://<app-name>.onrender.com` 地址
-
-**注意**：当前项目设计为局域网使用。在公网环境部署后，WebRTC P2P 连接需要额外的 STUN/TURN 服务器支持。公网部署仅供体验，建议在内网环境使用以获得最佳性能。
-
-## 系统要求
-
-- Python 3.14+
-- [uv](https://github.com/astral-sh/uv)（自动安装）
+---
 
 ## 使用说明
 
 ### 共享端（Host）
 
-1. 打开浏览器访问 `http://<服务器IP>:8080/host.html`
-2. 勾选"共享系统音频"（可选，默认关闭）
-3. 点击"开始屏幕共享"按钮
-4. 选择要共享的屏幕或窗口
-5. 系统生成6位房间码（如：123456）
-6. 将房间码告知观看端
-7. 收到加入请求时点击"同意"授权
+1. 启动服务：`quietlink --port 8080`
+2. 打开浏览器访问 `http://<服务器IP>:8080/host.html`
+3. 勾选"共享系统音频"（可选，默认关闭）
+4. 点击"开始屏幕共享"按钮
+5. 选择要共享的屏幕或窗口
+6. 系统生成 6 位房间码（如：123456）
+7. 将房间码告知观看端
+8. 收到加入请求时点击"同意"授权
 
 ### 观看端（Client）
 
@@ -76,6 +159,8 @@
 4. 等待主机批准
 5. 连接成功后可以点击"开启声音"播放音频（如果主机共享了音频）
 6. 支持全屏观看
+
+---
 
 ## 音频功能
 
@@ -95,11 +180,15 @@
 - 首次使用时浏览器会请求音频权限
 - 系统音频捕获需要用户明确授权
 
+---
+
 ## 网络要求
 
 **必须在同一局域网内**（同一网段，如 `192.168.1.x`）才能正常连接。
 
 WebRTC 在同一网段内可以直接通过本地 IP 建立连接，无需 STUN/TURN 服务器。
+
+---
 
 ## 端口说明
 
@@ -107,6 +196,23 @@ WebRTC 在同一网段内可以直接通过本地 IP 建立连接，无需 STUN/
 |------|------|------|
 | 8080 | HTTP/WebSocket | 信令服务和页面服务 |
 | 8443 | HTTPS | 安全连接（可选） |
+
+---
+
+## 云端部署
+
+项目支持 Render 部署。
+
+### Render 部署
+
+1. 连接 GitHub 仓库到 Render
+2. 创建新的 Web Service
+3. 选择 Python 环境，自动检测依赖
+4. 部署完成获得 `https://<app-name>.onrender.com` 地址
+
+**注意**：当前项目设计为局域网使用。在公网环境部署后，WebRTC P2P 连接需要额外的 STUN/TURN 服务器支持。公网部署仅供体验，建议在内网环境使用以获得最佳性能。
+
+---
 
 ## 故障排查
 
@@ -133,13 +239,9 @@ WebRTC 在同一网段内可以直接通过本地 IP 建立连接，无需 STUN/
 
 ### 客户端无法访问
 
-1. 确认防火墙放行了 8080 端口：
-   ```bash
-   # Linux (iptables)
-   sudo iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
-   ```
-
+1. 确认防火墙放行了 8080 端口
 2. 检查 SELinux/AppArmor 设置
+3. 确认在同一局域网内
 
 ### 全屏按钮不可见
 
@@ -147,27 +249,40 @@ WebRTC 在同一网段内可以直接通过本地 IP 建立连接，无需 STUN/
 2. 检查浏览器是否支持全屏 API
 3. 尝试点击视频区域触发全屏
 
+---
+
 ## 项目结构
 
 ```
 .
-├── main.py              # FastAPI 信令服务器
-├── start.sh             # 启动脚本
-├── pyproject.toml       # Python 依赖
-├── certs/               # SSL 证书目录（gitignore）
-│   ├── cert.pem
-│   └── key.pem
-└── static/
-    ├── host.html        # 共享端页面
-    └── client.html      # 观看端页面
+├── quietlink/              # Python 包
+│   ├── __init__.py       # 包入口
+│   ├── server.py         # FastAPI 应用
+│   ├── cli.py            # 命令行工具
+│   └── static/           # 静态文件
+│       ├── index.html      # 主页
+│       ├── host.html       # 共享端
+│       └── client.html     # 观看端
+├── pyproject.toml          # Python 依赖配置
+├── Dockerfile             # Docker 构建文件
+├── docker-compose.yml      # Docker 编排文件
+├── start.sh              # 开发启动脚本
+├── LICENSE               # MIT 许可证
+├── README.md             # 项目文档
+└── tests/                # 测试目录
 ```
+
+---
 
 ## 技术栈
 
-- **后端**：Python + FastAPI + WebSocket
+- **后端**：Python 3.14+ + FastAPI + WebSocket
 - **前端**：原生 JavaScript + WebRTC API
-- **依赖管理**：uv
+- **依赖管理**：uv（现代 Python 包管理器）
 - **音频编解码**：Opus（WebRTC 默认）
+- **部署方式**：PyPI、Docker、本地开发
+
+---
 
 ## 安全说明
 
@@ -176,6 +291,8 @@ WebRTC 在同一网段内可以直接通过本地 IP 建立连接，无需 STUN/
 - 主机需手动批准客户端加入
 - 内网使用，无需暴露到公网
 - 如需公网部署，请配置强密码和 HTTPS
+
+---
 
 ## 浏览器兼容性
 
@@ -187,6 +304,36 @@ WebRTC 在同一网段内可以直接通过本地 IP 建立连接，无需 STUN/
 | 全屏播放 | ✅ | ✅ | ✅ |
 | 移动端 | ✅ | ✅ | ✅ |
 
+---
+
 ## 许可证
 
 MIT License
+
+---
+
+## 相关链接
+
+- **PyPI**：https://pypi.org/project/quietlink/
+- **Docker Hub**：https://hub.docker.com/r/percyc/quietlink
+- **GitHub**：https://github.com/percyc/quietlink
+- **Demo**：https://quietlink.onrender.com/
+
+---
+
+## 更新日志
+
+### v1.0.0 (2025-02-10)
+
+- 🎉 首次发布
+- ✅ 支持 PyPI 安装
+- ✅ 支持 Docker 部署（AMD64 + ARM64）
+- ✅ 支持命令行工具
+- ✅ 优化的项目结构
+- ✅ 完整的文档和示例
+
+---
+
+## 贡献
+
+欢迎提交 Issue 和 Pull Request！

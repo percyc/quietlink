@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  quietlink:
+    image: percyc/quietlink:latest
+    container_name: quietlink
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - HTTPS=false
+    restart: unless-stopped
+
+  # HTTPS 模式
+  quietlink-https:
+    image: percyc/quietlink:latest
+    container_name: quietlink-https
+    ports:
+      - "8443:8443"
+    environment:
+      - PORT=8443
+      - HTTPS=true
+    restart: unless-stopped
