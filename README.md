@@ -19,8 +19,8 @@ pip install quietlink==1.0.0
 # 或使用 uv 安装（更快）
 uv pip install quietlink==1.0.0
 
-# 启动服务
-quietlink --port 8080
+# 启动服务（注意：现代浏览器要求 HTTPS 才能使用 WebRTC，如果不了解技术细节，请直接使用 HTTPS）
+quietlink --port 8443 --https
 quietlink --port 9000 --https
 ```
 
@@ -29,18 +29,18 @@ quietlink --port 9000 --https
 #### 单架构部署（快速）
 
 ```bash
-# 拉取并运行
-docker run -d -p 8080:8080 \
-  -e PORT=8080 \
-  -e HTTPS=false \
-  --name quietlink \
-  percyc/quietlink:v1.0.0
-
-# HTTPS 模式
+# HTTPS 模式（推荐，现代浏览器要求）
 docker run -d -p 8443:8443 \
   -e PORT=8443 \
   -e HTTPS=true \
   --name quietlink-https \
+  percyc/quietlink:v1.0.0
+
+# HTTP 模式（需要额外设置 HTTPS 代理）
+docker run -d -p 8080:8080 \
+  -e PORT=8080 \
+  -e HTTPS=false \
+  --name quietlink \
   percyc/quietlink:v1.0.0
 ```
 
@@ -98,9 +98,10 @@ cd quietlink
 # 使用 uv 同步依赖
 uv sync
 
-# 启动开发服务器
-./start.sh
-./start.sh 9000 https
+# 启动开发服务器（推荐 HTTPS 模式）
+./start.sh 8443 https
+# 或 HTTP 模式（需要额外设置 HTTPS 代理）
+./start.sh 8080
 ```
 
 ---
@@ -142,8 +143,8 @@ quietlink [选项]
 
 ### 共享端（Host）
 
-1. 启动服务：`quietlink --port 8080`
-2. 打开浏览器访问 `http://<服务器IP>:8080/host.html`
+1. 启动服务：`quietlink --port 8443 --https`
+2. 打开浏览器访问 `https://<服务器IP>:8443/host.html`
 3. 勾选"共享系统音频"（可选，默认关闭）
 4. 点击"开始屏幕共享"按钮
 5. 选择要共享的屏幕或窗口
@@ -153,12 +154,16 @@ quietlink [选项]
 
 ### 观看端（Client）
 
-1. 打开浏览器访问 `http://<服务器IP>:8080/client.html`
+1. 打开浏览器访问 `https://<服务器IP>:8443/client.html`
 2. 输入房间码（如：123456）
 3. 点击"加入"
 4. 等待主机批准
 5. 连接成功后可以点击"开启声音"播放音频（如果主机共享了音频）
 6. 支持全屏观看
+
+### 重要提醒
+
+现代浏览器（Chrome、Edge、Firefox 等）出于安全考虑，要求 **HTTPS 环境才能使用 WebRTC 功能**。如果您使用 HTTP 部署，将无法建立音视频连接，需要额外设置 HTTPS 代理。建议直接使用 HTTPS 模式部署以避免不必要的配置。
 
 ---
 
@@ -194,8 +199,8 @@ WebRTC 在同一网段内可以直接通过本地 IP 建立连接，无需 STUN/
 
 | 端口 | 用途 | 说明 |
 |------|------|------|
-| 8080 | HTTP/WebSocket | 信令服务和页面服务 |
-| 8443 | HTTPS | 安全连接（可选） |
+| 8080 | HTTP/WebSocket | 信令服务和页面服务（需要额外 HTTPS 代理） |
+| 8443 | HTTPS | 安全连接（推荐，现代浏览器必需） |
 
 ---
 
@@ -216,11 +221,19 @@ WebRTC 在同一网段内可以直接通过本地 IP 建立连接，无需 STUN/
 
 ## 故障排查
 
-### 连接成功但视频黑屏
+### WebRTC 连接失败 / 视频黑屏
 
-1. 检查浏览器控制台是否有 ICE 错误
-2. 在 Firefox 地址栏输入 `about:webrtc` 查看详细日志
-3. 确认两端在同一网段
+1. **首先确认是否使用 HTTPS**：现代浏览器要求 HTTPS 才能使用 WebRTC
+2. 如果使用 HTTP，请改用 HTTPS 模式：`quietlink --port 8443 --https`
+3. 检查浏览器控制台是否有 HTTPS 或 WebRTC 相关错误
+4. 在 Firefox 地址栏输入 `about:webrtc` 查看详细日志
+5. 确认两端在同一网段
+
+### HTTP vs HTTPS 说明
+
+- **HTTP**：仅适用于开发调试，需要额外设置 HTTPS 代理才能使用
+- **HTTPS**：现代浏览器必须要求，自动生成自签名证书
+- 如果您看到 "getUserMedia is not allowed in insecure contexts" 错误，说明需要 HTTPS
 
 ### 无声音
 
@@ -281,6 +294,7 @@ WebRTC 在同一网段内可以直接通过本地 IP 建立连接，无需 STUN/
 - **依赖管理**：uv（现代 Python 包管理器）
 - **音频编解码**：Opus（WebRTC 默认）
 - **部署方式**：PyPI、Docker、本地开发
+- **HTTPS**：自签名证书自动生成，现代浏览器要求
 
 ---
 
@@ -290,7 +304,8 @@ WebRTC 在同一网段内可以直接通过本地 IP 建立连接，无需 STUN/
 - 房间码随机生成，防止暴力破解
 - 主机需手动批准客户端加入
 - 内网使用，无需暴露到公网
-- 如需公网部署，请配置强密码和 HTTPS
+- 自动生成 HTTPS 证书，符合现代浏览器安全要求
+- 如需公网部署，请配置强密码和有效的 HTTPS 证书
 
 ---
 
@@ -303,6 +318,12 @@ WebRTC 在同一网段内可以直接通过本地 IP 建立连接，无需 STUN/
 | 麦克风音频 | ✅ | ✅ | ✅ |
 | 全屏播放 | ✅ | ✅ | ✅ |
 | 移动端 | ✅ | ✅ | ✅ |
+| HTTPS 要求 | ✅ 必须 | ✅ 必须 | ✅ 必须 |
+
+### 重要说明
+- 所有现代浏览器都要求在 **HTTPS 环境** 下才能使用 WebRTC 功能
+- HTTP 仅适用于开发调试，生产环境请务必使用 HTTPS
+- 自签名证书需要在浏览器中手动信任（通常会出现"您的连接不是私密连接"警告）
 
 ---
 
