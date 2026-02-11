@@ -2,7 +2,7 @@
 
 基于 WebRTC 的纯局域网屏幕共享系统，支持音视频传输，无需互联网连接。
 
-**[English](README_EN.md)** | [![PyPI version](https://badge.fury.io/py/percyc/quietlink.svg)](https://pypi.org/project/quietlink/) | [![Docker Hub](https://img.shields.io/docker/v/percyc/quietlink)](https://hub.docker.com/r/percyc/quietlink) | [![Demo](https://img.shields.io/badge/Demo-Live-green)](https://quietlink.onrender.com/)
+**[English](README_EN.md)** | [![PyPI version](https://badge.fury.io/py/quietlink.svg)](https://pypi.org/project/quietlink/) | [![Docker Hub](https://img.shields.io/docker/v/percyc/quietlink)](https://hub.docker.com/r/percyc/quietlink) | [![Demo](https://img.shields.io/badge/Demo-Live-green)](https://quietlink.onrender.com/)
 
 ## 在线体验
 

@@ -2,7 +2,7 @@
 
 A WebRTC-based pure LAN screen sharing system with audio/video transmission support, no internet connection required.
 
-[中文](README.md) | [![PyPI version](https://badge.fury.io/py/percyc/quietlink.svg)](https://pypi.org/project/quietlink/) | [![Docker Hub](https://img.shields.io/docker/v/percyc/quietlink)](https://hub.docker.com/r/percyc/quietlink) | [![Demo](https://img.shields.io/badge/Demo-Live-green)](https://quietlink.onrender.com/)
+[中文](README.md) | [![PyPI version](https://badge.fury.io/py/quietlink.svg)](https://pypi.org/project/quietlink/) | [![Docker Hub](https://img.shields.io/docker/v/percyc/quietlink)](https://hub.docker.com/r/percyc/quietlink) | [![Demo](https://img.shields.io/badge/Demo-Live-green)](https://quietlink.onrender.com/)
 
 ## Online Demo
 
