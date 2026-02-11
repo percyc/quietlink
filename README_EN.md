@@ -34,7 +34,7 @@ uv pip install quietlink==1.0.0
 
 # Start service (note: modern browsers require HTTPS for WebRTC, use HTTPS if unsure)
 quietlink --port 8443 --https
-quietlink --port 9000 --https
+quietlink --port 9000 --http
 ```
 
 ### Method 2: Docker Deployment

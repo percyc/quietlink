@@ -21,7 +21,7 @@ uv pip install quietlink==1.0.0
 
 # 启动服务（注意：现代浏览器要求 HTTPS 才能使用 WebRTC，如果不了解技术细节，请直接使用 HTTPS）
 quietlink --port 8443 --https
-quietlink --port 9000 --https
+quietlink --port 9000 --http
 ```
 
 ### 方式二：使用 Docker 部署
